@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Rest-api-aspnet8")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b6fe5fbb67995377fe9c87e58ed496763cf35d53")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+74f5eccf1cb50cafbcee9e3cde696bee499af6a3")]
 [assembly: System.Reflection.AssemblyProductAttribute("Rest-api-aspnet8")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Rest-api-aspnet8")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

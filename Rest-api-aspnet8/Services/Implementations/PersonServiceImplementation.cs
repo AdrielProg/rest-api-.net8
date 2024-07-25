@@ -3,14 +3,16 @@ using Rest_api_aspnet8.Model;
 using Rest_api_aspnet8.Model.Context;
 using Rest_api_aspnet8.Model.Exceptions;
 using System;
+using System.Data;
 
 namespace Rest_api_aspnet8.Services.Implementations
 {
     public class PersonServiceImplementation : IPersonService
     {
         private readonly MySQLContext _context;
-        public PersonServiceImplementation(MySQLContext mySQLContext) { 
-            
+        public PersonServiceImplementation(MySQLContext mySQLContext)
+        {
+
             _context = mySQLContext;
         }
         public List<Person> FindAll()
@@ -21,30 +23,38 @@ namespace Rest_api_aspnet8.Services.Implementations
             }
             catch (Exception e)
             {
-                throw new DataAccessException("An error occurred while retrieving all persons.", ex);
+                throw new DataAccessException(e);
             }
         }
-        public Person GetById(long id)
+
+        public Person GetById(long? id)
         {
+            if (id == null)
+            {
+                throw new BusinessException("ID cannot be null.");
+            }
+
             try
             {
                 var person = _context.Persons.SingleOrDefault(e => e.Id == id);
                 if (person == null)
                 {
-                    throw new BusinessException($"Person with id {id} not found.");
+                    throw new BusinessException("Person not found.");
                 }
                 return person;
             }
             catch (Exception e)
             {
-                throw new DataAccessException("An error occurred while retrieving the person by id.", ex);
+                throw new BusinessException("An error occurred while retrieving the person.", e);
             }
         }
+
+
         public Person Create(Person person)
         {
             if (person == null)
             {
-                throw new BusinessException("Person object cannot be null.");
+                throw new BusinessException();
             }
             try
             {
@@ -52,64 +62,55 @@ namespace Rest_api_aspnet8.Services.Implementations
                 _context.SaveChanges();
                 return person;
             }
-            catch (DbUpdateException e)
-            {
-                throw new DataAccessException("An error occurred while saving the person to the database.", e);
-            }
             catch (Exception e)
             {
-                throw new DataAccessException("An unexpected error occurred while creating the person.", e);
+                throw new DataAccessException(e);
             }
         }
-        public void Delete(long id)
-        {
-            var result = _context.Persons.SingleOrDefault(e => e.Id.Equals(id));
-            if (result != null)
-            {
 
-                try
-                {
-                    _context.Persons.Remove(result);
-                    _context.SaveChanges();
-                }
-                catch (DbUpdateException e)
-                {
-                    throw new BusinessException("An error occurs when deleting data", e);
-                }
-                catch (Exception e)
-                {
-                    throw new DataAccessException("An unexpected error occurred while deleting the person.", e);
-                }
+        public void Delete(long? id)
+        {
+            var result = _context.Persons.SingleOrDefault(e => e.Id == id);
+            if (result == null)
+            {
+                throw new BusinessException();
+            }
+
+            try
+            {
+                _context.Persons.Remove(result);
+                _context.SaveChanges();
+            }
+            catch (DbUpdateException e)
+            {
+                throw new DataAccessException(e);
             }
         }
+
         public Person Update(Person person)
         {
-            if (!Exists(person.Id))
+            if (person == null)
             {
-                throw new BusinessException("Person object cannot be null.");
+                throw new BusinessException("Person cannot be null.");
             }
-            var result = _context.Persons.SingleOrDefault(e => e.Id.Equals(person.Id));
-            if (result != null) {
 
-                try
-                {
-                    _context.Entry(result).CurrentValues.SetValues(person);
-                    _context.SaveChanges();
-                }
-                catch (DbUpdateException e)
-                {
-                    throw new DataAccessException("An error occurred while updating a record on the database", e);
-                }
-                catch (Exception e)
-                {
-                    throw new DataAccessException("An unexpected error occurred while creating the person.", e);
-                }
+            var existingPerson = _context.Persons.SingleOrDefault(e => e.Id == person.Id);
+
+            if (existingPerson == null)
+            {
+                throw new BusinessException($"Person with ID {person.Id} not found.");
             }
-                return person;
-        }
-        private bool Exists(long id)
-        {
-            return _context.Persons.Any(e => e.Id.Equals(id));
+
+            try
+            {
+                _context.Entry(existingPerson).CurrentValues.SetValues(person);
+                _context.SaveChanges();
+                return existingPerson;
+            }
+            catch (DbUpdateException e)
+            {
+                throw new DataAccessException("An error occurred while updating the person.", e);
+            }
         }
     }
 }

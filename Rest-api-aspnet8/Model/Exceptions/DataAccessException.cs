@@ -3,10 +3,10 @@
     public class DataAccessException : Exception
     {
         public DataAccessException() { }
-
+        public DataAccessException(Exception e) { }
         public DataAccessException(string message) : base(message) { }
 
-        public DataAccessException(string message, Exception ex) : base(message, ex) { }
+        public DataAccessException(string message, Exception e) : base(message, e) { }
 
     }
 }
