@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Rest_api_aspnet8.Model;
 using Rest_api_aspnet8.Model.Context;
+using Rest_api_aspnet8.Model.Exceptions.Person;
 using Rest_api_aspnet8.Model.Exceptions;
-using System;
-using System.Data;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Rest_api_aspnet8.Services.Implementations
 {
@@ -21,9 +21,9 @@ namespace Rest_api_aspnet8.Services.Implementations
             {
                 return _context.Persons.ToList();
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                throw new DataAccessException(e);
+                throw new DataAccessException("An error occurred while retrieving all persons.");
             }
         }
 
@@ -31,30 +31,28 @@ namespace Rest_api_aspnet8.Services.Implementations
         {
             if (id == null)
             {
-                throw new BusinessException("ID cannot be null.");
+                throw new PersonNullException();
             }
 
-            try
+            var person = _context.Persons.SingleOrDefault(e => e.Id == id);
+
+            if (person == null)
             {
-                var person = _context.Persons.SingleOrDefault(e => e.Id == id);
-                if (person == null)
-                {
-                    throw new BusinessException("Person not found.");
-                }
-                return person;
+                throw new PersonNotFoundException($"Person with ID {id} not found.");
             }
-            catch (Exception e)
-            {
-                throw new BusinessException("An error occurred while retrieving the person.", e);
-            }
+            return person;
         }
-
 
         public Person Create(Person person)
         {
             if (person == null)
             {
-                throw new BusinessException();
+                throw new PersonNullException();
+            }
+            var result = _context.Persons.SingleOrDefault(e => e.Id == person.Id);
+            if (result != null) 
+            {
+                throw new PersonAlreadyExistsException();
             }
             try
             {
@@ -62,9 +60,9 @@ namespace Rest_api_aspnet8.Services.Implementations
                 _context.SaveChanges();
                 return person;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                throw new DataAccessException(e);
+                throw;
             }
         }
 
@@ -73,7 +71,7 @@ namespace Rest_api_aspnet8.Services.Implementations
             var result = _context.Persons.SingleOrDefault(e => e.Id == id);
             if (result == null)
             {
-                throw new BusinessException();
+                throw new PersonNotFoundException($"Person with ID {id} not found.");
             }
 
             try
@@ -81,9 +79,9 @@ namespace Rest_api_aspnet8.Services.Implementations
                 _context.Persons.Remove(result);
                 _context.SaveChanges();
             }
-            catch (DbUpdateException e)
+            catch (DbUpdateException)
             {
-                throw new DataAccessException(e);
+                throw new DataAccessException("An error occurred while deleting the person.");
             }
         }
 
@@ -91,14 +89,14 @@ namespace Rest_api_aspnet8.Services.Implementations
         {
             if (person == null)
             {
-                throw new BusinessException("Person cannot be null.");
+                throw new PersonNullException();
             }
 
             var existingPerson = _context.Persons.SingleOrDefault(e => e.Id == person.Id);
 
             if (existingPerson == null)
             {
-                throw new BusinessException($"Person with ID {person.Id} not found.");
+                throw new PersonNotFoundException($"Person with ID {person.Id} not found.");
             }
 
             try
@@ -107,9 +105,9 @@ namespace Rest_api_aspnet8.Services.Implementations
                 _context.SaveChanges();
                 return existingPerson;
             }
-            catch (DbUpdateException e)
+            catch (DbUpdateException)
             {
-                throw new DataAccessException("An error occurred while updating the person.", e);
+                throw new DataAccessException("An error occurred while updating the person.");
             }
         }
     }

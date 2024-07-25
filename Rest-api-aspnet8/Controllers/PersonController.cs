@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Rest_api_aspnet8.Model;
 using Rest_api_aspnet8.Services;
 using Rest_api_aspnet8.Model.Exceptions;
+using Rest_api_aspnet8.Model.Exceptions.Person;
 
 namespace Rest_api_aspnet8.Controllers
 {
@@ -21,91 +22,59 @@ namespace Rest_api_aspnet8.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            try
-            {
-                var persons = _personService.FindAll();
-                return Ok(persons);
-            }
-            catch (DataAccessException e)
-            {
-                _logger.LogError(e, "An error occurred while retrieving all persons.");
-                return StatusCode(500, e.Message);
-            }
+            var persons = _personService.FindAll();
+            return Ok(persons);
         }
 
         [HttpGet("{id}")]
         public IActionResult Get(long? id)
         {
-            if (id == null) { 
+            if (id == null)
+            {
                 return BadRequest();
             }
-            try
-            {
-                var person = _personService.GetById(id);
-                return Ok(person);
-            }
-            catch (BusinessException)
-            {
-                return NotFound();
-            }
+
+            var person = _personService.GetById(id);
+            return Ok(person);
         }
 
         [HttpPost]
         public IActionResult Create([FromBody] Person person)
         {
-            if (person == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return HandleInvalidModelState();
             }
-            try
-            {
-                var createdPerson = _personService.Create(person);
-                return Ok(person);
-            }
-            catch (DataAccessException e)
-            {
-                return StatusCode(500, e.Message);
-            }
-                
+
+            var createdPerson = _personService.Create(person);
+            return Ok(createdPerson);
         }
 
         [HttpPut("{id}")]
         public IActionResult Update(long id, [FromBody] Person person)
         {
-            if (person == null || id != person.Id)
+            if (!ModelState.IsValid || id != person.Id)
             {
-                return BadRequest();
+                return HandleInvalidModelState();
             }
 
-            try
-            {
-                var updatedPerson = _personService.Update(person);
-                return Ok(updatedPerson);
-            }
-            catch (BusinessException e)
-            {
-                return NotFound(e.Message);
-            }
-            catch (DataAccessException e)
-            {
-                _logger.LogError(e, "An error occurred while creating a person.");
-                return StatusCode(500, e.Message);
-            }
+            var updatedPerson = _personService.Update(person);
+            return Ok(updatedPerson);
         }
-
 
         [HttpDelete("{id}")]
         public IActionResult Delete(long id)
         {
-            try
-            {
-                _personService.Delete(id);
-                return NoContent();
-            }
-            catch (BusinessException)
-            {
-                return NotFound();
-            }
+            _personService.Delete(id);
+            return NoContent();
+        }
+
+        private IActionResult HandleInvalidModelState()
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors)
+                                         .Select(e => e.ErrorMessage);
+            return BadRequest(new { errors });
         }
     }
 }
+

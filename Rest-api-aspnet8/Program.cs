@@ -20,6 +20,7 @@ builder.Services.AddScoped<IPersonService, PersonServiceImplementation>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseMiddleware<Rest_api_aspnet8.Middleware.GlobalExceptionHandlerMiddleware>();
 
 app.UseHttpsRedirection();
 
